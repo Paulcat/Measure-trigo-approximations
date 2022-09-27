@@ -109,7 +109,24 @@ switch type
        Xf = compute_grid(n,'spectral-sym');
        w  = prod(1 - abs(Xf) ./ reshape(n+1,[ones(1,d) d]), d+1);
 		 w  = ifftshift(w);
-       W = ones([2*n+1,1]) 
+		 
+		 % comparison with auto-correlation computation
+% 		 O = ones([n+1,1]); O = padarray(O,n,'post');
+% 		 w2 = ifftn(abs(fftn(O)).^2) / prod(n+1);
+		 
+		 % comparison with fft
+         L = 256;
+		 [Y,X] = meshgrid((0:2*L-1)'/2/L);
+		 f1 = sin(pi*(n(1)+1)*X).^2 ./ sin(pi*X).^2;
+		 f1(isnan(f1)) = (n(1)+1)^2;
+		 f2 = sin(pi*(n(2)+1)*Y).^2 ./ sin(pi.*Y).^2;
+		 f2(isnan(f2)) = (n(2)+1)^2;
+		 f = f1.*f2;
+		 w3 = real(fftshift(fft2(f)));
+         w3 = 1/4/L/L * w3(L+1-n(1):L+1+n(1),L+1-n(2):L+1+n(2));
+         w3 = 1/prod(n+1) * ifftshift(w3);
+		 
+       W = ones([2*n+1,1]);
         
     case 'Gaussian'
        Xf  = compute_grid(n,'spectral-sym');
@@ -144,11 +161,46 @@ switch type
         O = ones([m+1,1]); O = padarray(O,m,'post'); % outer padding
         D = fftshift(ifftn(abs(fftn(O)).^2));
         w = ifftn(abs(fftn(padarray(D,m))).^2); % with centered padding;
-		  
-        
-%         W = N*D(:).*D(:)';
+
+		 % comparison with fft approximation
+%          L = 256;
+% 		 [Y,X] = meshgrid((0:(2*L-1))'/2/L);
+% 		 %f1 = sin(pi*(2*m(1)-1)*X).^4 ./ sin(pi*X).^4;
+%          f1 = sin(pi*(m(1)+1)*X).^4 ./ sin(pi*X).^4;
+% 		 f1(isnan(f1)) = (m(1)+1)^4;
+% 		 f2 = sin(pi*(m(2)+1)*Y).^4 ./ sin(pi.*Y).^4;
+% 		 f2(isnan(f2)) = (m(2)+1)^4;
+% 		 f = f1.*f2;
+% 		 w3 = real(fftshift(fft2(f)));
+%          w3 = 1/4/L/L * w3(L+1-2*m(1):L+1+2*m(1),L+1-2*m(2):L+1+2*m(2));
+%          w3 = ifftshift(w3); % divide by prod(n+1)??
+ 
+        %W = N*D(:).*D(:)';
+
+	 case 'Fejer-3'
+         %'ohoh'
+         m = floor(n/3);
+%          O1 = ones([m+1,1]); O1 = padarray(O1,m,'post');
+%          O2 = fftshift(ifftn(abs(fftn(O1)).^2));
+% 			O2 = padarray(O2,m);
+%          O3 = ifftn(abs(fftn(O2)).^2);
+% 			%O3 = padarray(O3,m,'post');
+%          w = ifftn(abs(fftn(O3)).^2);
+
+         % compare with fft approximation
+         L = 512;
+         [Y,X] = meshgrid((0:2*L-1)'/2/L);
+         f1 = sin(pi*(m(1)+1)*X).^6 ./ sin(pi*X).^6;
+         f1(isnan(f1)) = (m(1)+1)^6;
+         f2 = sin(pi*(m(2)+1)*Y).^6 ./ sin(pi*Y).^6;
+         f2(isnan(f2)) = (m(2)+1)^6;
+         f = f1.*f2;
+         w3 = real(fftshift(fft2(f)));
+         w3 = 1/4/L/L * w3(L+1-2*m(1):L+1+2*m(1),L+1-2*m(2):L+1+2*m(2));
+         w = 1/prod(n+1)*ifftshift(w3);
         
     otherwise
+		 
         error(['Unknown kernel: "', type, '"']);
 end
 
