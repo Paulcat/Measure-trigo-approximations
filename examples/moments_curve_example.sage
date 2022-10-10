@@ -3,6 +3,8 @@
 #     0 = 4*cos(x1)*cos(x2) + 4*cos(x1) + 4*cos(x2) - 1
 #
 # Dependencies: https://github.com/mwageringel/momentproblems
+#
+# Copyright (c) 2021 Markus Wageringel
 
 from momentproblems.moment_functionals import mk_moment_trigonometric_curve_example
 mom = mk_moment_trigonometric_curve_example(5/8, 0, prec=80)

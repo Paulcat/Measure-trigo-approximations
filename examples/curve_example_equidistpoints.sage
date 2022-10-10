@@ -3,6 +3,8 @@
 #     0 = 4*cos(x1)*cos(x2) + 4*cos(x1) + 4*cos(x2) - 1
 #
 # The starting point of the interval is excluded, the end point is included.
+#
+# Copyright (c) 2021 Markus Wageringel
 
 prec=80
 c1 = 5/8; c2 = 0
