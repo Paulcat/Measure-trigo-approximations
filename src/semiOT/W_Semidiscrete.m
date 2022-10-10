@@ -115,7 +115,18 @@ while l >= 1
 			OT = zeros(maxit,1);
         	for i=1:maxit
 				w = w + tau*grad(w);
-            OT(i) = obj(w);
+            OT(i) = obj(w).^(1/q);
+
+				%m = sqrt(size(G,1));
+				%t = (0:m-1)'/m;
+				%I = Laguerre_map(D,w);
+				%I = reshape(I,[m,m]);
+				%imagesc(t,t,I);
+				%contour(t,t,I,.5:s+.5,'r','Linewidth',3);
+				%scatter(x_l(:,2),x_l(:,1),50,'r','filled');
+				%xlim([0,1]), ylim([0,1]);
+				%drawnow;
+				%pause(1);
         	end
 
 		case 'l-bfgs'
@@ -123,7 +134,8 @@ while l >= 1
         	opt.display = 'full';
 			opt.progTol = progtol; % tolerance for lack of progress
          [w,~,~,output] = lbfgs(fg,w,opt);
-        	OT = -output.trace.fval;
+        	OT = (-output.trace.fval).^(1/q);
+			mean_time = mean(output.trace.time);
 
 			if verboseI
 				fprintf('Total time: %.2fs\n',sum(output.trace.time));
@@ -148,12 +160,15 @@ while l >= 1
 
 		 % display Laguerre cells
 		 clf, hold on;
+		 I = Laguerre_map(D,w);
+		 I = reshape(I,[m,m]);
 		 imagesc(t,t,I);
 		 contour(t,t,I,.5:s+.5,'r','Linewidth',3);
 		 scatter(x_l(:,2),x_l(:,1),50,'r','filled');
 		 %voronoi(x(:,2),x(:,1));
 		 xlim([0,1]); ylim([0,1]);
 		 drawnow;
+		 pause(1);
 	end
 end
 
@@ -172,7 +187,7 @@ q       = getoptions(options,'wasserstein',1); % choice of Wasserstein distance
 p       = getoptions(options,'norm',1); % choice of norm
 %
 nbloc   = getoptions(options,'parallelize',0); % number of blocs for parallel computing
-L  	  = getoptions(options,'multiscale',4); % number of scales
+L  	  = getoptions(options,'multiscale',0); % number of scales
 %
 %display_Lag = getoptions(options,'display_Lag',0); % display Laguerre cells
 display = getoptions(options,'display','off'); % outstream: 'off' | 'reduced' | 'debug'

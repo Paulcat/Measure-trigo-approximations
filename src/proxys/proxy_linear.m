@@ -7,10 +7,9 @@ function P = proxy_linear(c,n,options)
 %   measure up to order N.
 %
 %   Supported OPTIONS:
-%       - order : lex | colex(*)
-%       - kernel: Fejer(*) | Gaussian | Gaussian-squared | Jackson
-%	- grid_size
-%	- draw  : 0(*) | 1
+%		- kernel: Fejer(*) | Gaussian | Gaussian-squared | Jackson | K3
+%		- grid_size
+%		- draw  : 0(*) | 1
 
 %fprintf('Computing convolution proxy ...');
 
@@ -36,7 +35,7 @@ if sum(gc<fc) % check along each dimension
 end
 
 % Jackson order must be even
-if strcmp(kernel,'Jackson')
+if strcmp(kernel,'K2')
    if mod(n,2)
       error('Jackson kernel is only defined for even orders');
    end
@@ -57,9 +56,9 @@ end
 
 % fft implementation
 %c = M(moms(n,order,1)); % extract moments from moment matrix
-%c = reshape(c,[2*n+1,1]);
+c = reshape(c,[2*n+1,1]);
 %
-S0 = fftshift(w.*c); % convolution in Fourier
+S0 = fftshift(w.*ifftshift(c)); % convolution in Fourier
 S  = padarray(S0,ceil ((mgrid-1)/2)-n,'pre');
 S  = padarray(S, floor((mgrid+1)/2)-n-1,'post');
 %TODO: find a more elegant way
@@ -105,7 +104,7 @@ function w = compute_weights(type,n,varargin)
 d = numel(n);
 
 switch type
-    case 'Fejer'
+    case 'F'
        Xf = compute_grid(n,'spectral-sym');
        w  = prod(1 - abs(Xf) ./ reshape(n+1,[ones(1,d) d]), d+1);
 		 w  = ifftshift(w);
@@ -115,18 +114,18 @@ switch type
 % 		 w2 = ifftn(abs(fftn(O)).^2) / prod(n+1);
 		 
 		 % comparison with fft
-         L = 256;
-		 [Y,X] = meshgrid((0:2*L-1)'/2/L);
-		 f1 = sin(pi*(n(1)+1)*X).^2 ./ sin(pi*X).^2;
-		 f1(isnan(f1)) = (n(1)+1)^2;
-		 f2 = sin(pi*(n(2)+1)*Y).^2 ./ sin(pi.*Y).^2;
-		 f2(isnan(f2)) = (n(2)+1)^2;
-		 f = f1.*f2;
-		 w3 = real(fftshift(fft2(f)));
-         w3 = 1/4/L/L * w3(L+1-n(1):L+1+n(1),L+1-n(2):L+1+n(2));
-         w3 = 1/prod(n+1) * ifftshift(w3);
+%		 L = 256;
+%		 [Y,X] = meshgrid((0:2*L-1)'/2/L);
+%		 f1 = sin(pi*(n(1)+1)*X).^2 ./ sin(pi*X).^2;
+%		 f1(isnan(f1)) = (n(1)+1)^2;
+%		 f2 = sin(pi*(n(2)+1)*Y).^2 ./ sin(pi.*Y).^2;
+%		 f2(isnan(f2)) = (n(2)+1)^2;
+%		 f = f1.*f2;
+%		 w_test = real(fftshift(fft2(f)));
+%		 w_test = 1/4/L/L * w3(L+1-n(1):L+1+n(1),L+1-n(2):L+1+n(2));
+%		 w_test = 1/prod(n+1) * ifftshift(w3);
 		 
-       W = ones([2*n+1,1]);
+%        W = ones([2*n+1,1]);
         
     case 'Gaussian'
        Xf  = compute_grid(n,'spectral-sym');
@@ -156,48 +155,51 @@ switch type
         
 %         W = N*w0(:).*w0(:)'; %HACK: why N?
         
-    case 'Jackson'
-        m = floor(n/2);
-        O = ones([m+1,1]); O = padarray(O,m,'post'); % outer padding
-        D = fftshift(ifftn(abs(fftn(O)).^2));
-        w = ifftn(abs(fftn(padarray(D,m))).^2); % with centered padding;
+    case 'K2'
+		 m = floor(n/2);
+		 O = ones([m+1,1]); O = padarray(O,m,'post'); % outer padding
+		 D = fftshift(ifftn(abs(fftn(O)).^2));
+		 w = ifftn(abs(fftn(padarray(D,m))).^2); % with centered padding;
 
 		 % comparison with fft approximation
-%          L = 256;
-% 		 [Y,X] = meshgrid((0:(2*L-1))'/2/L);
-% 		 %f1 = sin(pi*(2*m(1)-1)*X).^4 ./ sin(pi*X).^4;
-%          f1 = sin(pi*(m(1)+1)*X).^4 ./ sin(pi*X).^4;
-% 		 f1(isnan(f1)) = (m(1)+1)^4;
-% 		 f2 = sin(pi*(m(2)+1)*Y).^4 ./ sin(pi.*Y).^4;
-% 		 f2(isnan(f2)) = (m(2)+1)^4;
-% 		 f = f1.*f2;
-% 		 w3 = real(fftshift(fft2(f)));
-%          w3 = 1/4/L/L * w3(L+1-2*m(1):L+1+2*m(1),L+1-2*m(2):L+1+2*m(2));
-%          w3 = ifftshift(w3); % divide by prod(n+1)??
+%		 L = 256;
+%		 [Y,X] = meshgrid((0:(2*L-1))'/2/L);
+%		 %f1 = sin(pi*(2*m(1)-1)*X).^4 ./ sin(pi*X).^4;
+%		 f1 = sin(pi*(m(1)+1)*X).^4 ./ sin(pi*X).^4;
+%		 f1(isnan(f1)) = (m(1)+1)^4;
+%		 f2 = sin(pi*(m(2)+1)*Y).^4 ./ sin(pi.*Y).^4;
+%		 f2(isnan(f2)) = (m(2)+1)^4;
+%		 f = f1.*f2;
+%		 w_test = real(fftshift(fft2(f)));
+%		 w_test = 1/4/L/L * w3(L+1-2*m(1):L+1+2*m(1),L+1-2*m(2):L+1+2*m(2));
+%		 w_test = ifftshift(w3); % divide by prod(n+1)??
  
-        %W = N*D(:).*D(:)';
+%         W = N*D(:).*D(:)';
 
-	 case 'Fejer-3'
-         %'ohoh'
+	 case 'K3'
          m = floor(n/3);
-%          O1 = ones([m+1,1]); O1 = padarray(O1,m,'post');
-%          O2 = fftshift(ifftn(abs(fftn(O1)).^2));
-% 			O2 = padarray(O2,m);
-%          O3 = ifftn(abs(fftn(O2)).^2);
-% 			%O3 = padarray(O3,m,'post');
-%          w = ifftn(abs(fftn(O3)).^2);
 
-         % compare with fft approximation
-         L = 512;
-         [Y,X] = meshgrid((0:2*L-1)'/2/L);
-         f1 = sin(pi*(m(1)+1)*X).^6 ./ sin(pi*X).^6;
-         f1(isnan(f1)) = (m(1)+1)^6;
-         f2 = sin(pi*(m(2)+1)*Y).^6 ./ sin(pi*Y).^6;
-         f2(isnan(f2)) = (m(2)+1)^6;
-         f = f1.*f2;
-         w3 = real(fftshift(fft2(f)));
-         w3 = 1/4/L/L * w3(L+1-2*m(1):L+1+2*m(1),L+1-2*m(2):L+1+2*m(2));
-         w = 1/prod(n+1)*ifftshift(w3);
+			%TODO: exact formula
+%        O1 = ones([m+1,1]); O1 = padarray(O1,m,'post');
+%        O2 = fftshift(ifftn(abs(fftn(O1)).^2));
+% 			O2 = padarray(O2,m);
+%        O3 = ifftn(abs(fftn(O2)).^2);
+% 			%O3 = padarray(O3,m,'post');
+%        w = ifftn(abs(fftn(O3)).^2);
+
+         % fft approximation
+			L = 2048;
+			[Y,X] = meshgrid((0:2*L-1)'/2/L);
+			f1 = sin(pi*(m(1)+1)*X).^6 ./ sin(pi*X).^6;
+			f1(isnan(f1)) = (m(1)+1)^6;
+			f2 = sin(pi*(m(2)+1)*Y).^6 ./ sin(pi*Y).^6;
+			f2(isnan(f2)) = (m(2)+1)^6;
+			f = f1.*f2;
+			w = real(fftshift(fft2(f)));
+			w = 1/4/L/L * w(L+1-n(1):L+1+n(1),L+1-n(2):L+1+n(2));
+			%w = 1/prod(n+1)*ifftshift(w3);
+			%w(w<0) = 0;
+			w = ifftshift(w);
         
     otherwise
 		 
