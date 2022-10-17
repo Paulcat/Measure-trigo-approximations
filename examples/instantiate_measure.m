@@ -9,7 +9,7 @@ else
 end
 
 switch type
-	case 'discrete'
+	case 'd'
 		x = .1 + .8*rand(s,d);
 		a = normalize1(.1+.6*rand(s,1));
 
@@ -29,7 +29,7 @@ switch type
 
 		mvec = @(kv) exp(-2i*pi*kv(:,2)*b) .* ((kv(:,1)*q2 + kv(:,2)*q1)==0);
 
-	case 'circle'
+	case 'c'
 		if d~=2
 			error('my circle only works in 2 dimensions');
 		end
@@ -49,7 +49,7 @@ switch type
 
 		mvec = @(kv) exp(-2i*pi*sum(kv.*c0,d)) .* besselj(0,-2*pi*r0*vecnorm(kv,2,2));
 
-	case 'curve'
+	case 'z'
 		if d~=2
 			error('my curve only works in 2 dimensions');
 		end
