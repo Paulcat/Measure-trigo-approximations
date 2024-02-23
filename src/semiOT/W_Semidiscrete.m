@@ -35,7 +35,7 @@ end
 
 
 % load options
-[verbose,verboseI,method,maxit,tau,progtol,p,q,nbloc,L] = ...
+[verbose,verboseI,method,maxit,tau,progtol,useMex,p,q,nbloc,L] = ...
 	processOptions(options);
 
 
@@ -133,6 +133,7 @@ while l >= 1
         	opt.MaxIter = maxit;
         	opt.display = 'full';
 			opt.progTol = progtol; % tolerance for lack of progress
+            opt.useMex = useMex;
          [w,~,~,output] = lbfgs(fg,w,opt);
         	OT = (-output.trace.fval).^(1/q);
 			mean_time = mean(output.trace.time);
@@ -176,12 +177,13 @@ end
 end
 
 
-function [verbose,verboseI,method,maxit,tau,progtol,p,q,nbloc,L] = processOptions(options)
+function [verbose,verboseI,method,maxit,tau,progtol,useMex,p,q,nbloc,L] = processOptions(options)
 
 method  = getoptions(options,'method','l-bfgs'); % choice of descent algorithm
 maxit   = getoptions(options,'maxit',200); % max iterations for descent
 tau     = getoptions(options,'tau',.1); % step size for gradient descent
 progtol = getoptions(options,'progtol',1e-9); % tolerance for descent wrt param changes
+useMex  = getoptions(options,'useMex',1);
 %
 q       = getoptions(options,'wasserstein',1); % choice of Wasserstein distance
 p       = getoptions(options,'norm',1); % choice of norm

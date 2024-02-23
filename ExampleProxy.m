@@ -92,6 +92,7 @@ options_W.maxit = 100;
 options_W.wasserstein = 1;
 options_W.norm = options_W.wasserstein; % HACK
 options_W.progtol = 1e-9;
+options_W.useMex = 1;
 % ****************************************** %
 
 
